@@ -66,7 +66,7 @@ for row in table.findAll('tr'):
     margins.append(margin)
 
 # save as a CSV file
-fm.writeCSV('margins.csv', headers, margins)
+fm.writeCSV('margins.csv', headers, margins, forced = True)
 
 # read as data frame
 margins_df = pd.read_csv('margins.csv')
