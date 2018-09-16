@@ -148,28 +148,7 @@ class Historical:
         df.set_index('Date', drop=True, inplace=True)
         return df
     
-    def line_plot_time_series(self, scrip_code, df):
-        figure, axis = plt.subplots(figsize=(16, 8))
-        df.plot(
-            kind='line',
-            y='Adjusted Close',
-            label='Closed Prices (INR)',
-            lineWidth=0.7,
-            ax=axis
-        )
-        axis.xaxis.set_major_formatter(mdates.DateFormatter('%b-%Y'))
-        axis.set_xticks(df.index[::60])
-        start_date = DateTime.date_time_to_formatted_date(df.index[0])
-        end_date = DateTime.date_time_to_formatted_date(df.index[-1])
-        plt.title(scrip_code + ' (' + start_date + ' to ' + end_date + ')')
-        plt.xlabel('')
-        plt.legend()
-        plt.tight_layout()
-        plt.show()
-        plt.savefig('timeseries.png')
-    
-    def candle_plot_time_series(self, scrip_code, df, recent=0):
-        Validator.validate_attribute(recent, int, True)
+    def __plot_params(self, df, recent):
         if recent is 0:
             count = df.index.size
             steps = 20
@@ -184,6 +163,50 @@ class Historical:
                 steps = 5
             else:
                 steps = 1
+        return count, steps, dfmt
+    
+    def __show_and_save(self, plt, show, save, fname):
+        if show:
+            plt.show()
+        if not show and save:
+            plt.savefig(fname)
+            plt.clf()
+            plt.close()
+        if show and save:
+            plt.savefig(fname)
+        if not show and not save:
+            plt.clf()
+            plt.close()
+    
+    def line_plot_time_series(
+            self, scrip_code, df, recent=0, show=True, save=True
+            ):
+        count, steps, dfmt = self.__plot_params(df, recent)
+        figure, axis = plt.subplots(figsize=(16, 8))
+        dohlc = df.tail(count).copy()
+        dohlc.plot(
+            kind='line',
+            y='Adjusted Close',
+            label='Closed Prices (INR)',
+            lineWidth=0.7,
+            ax=axis
+        )
+        axis.xaxis.set_major_formatter(mdates.DateFormatter(dfmt))
+        axis.set_xticks(dohlc.index[::-steps])
+        plt.setp(plt.gca().get_xticklabels(), rotation=90)
+        start_date = DateTime.date_time_to_formatted_date(dohlc.index[0])
+        end_date = DateTime.date_time_to_formatted_date(dohlc.index[-1])
+        plt.title(scrip_code + ' (' + start_date + ' to ' + end_date + ')')
+        plt.xlabel('')
+        plt.legend()
+        plt.tight_layout()
+        self.__show_and_save(plt, show, save, 'timeseries.png')
+    
+    def candle_plot_time_series(
+            self, scrip_code, df, recent=0, show=True, save=True
+            ):
+        Validator.validate_attribute(recent, int, True)
+        count, steps, dfmt = self.__plot_params(df, recent)
         figure, axis = plt.subplots(figsize=(16, 8))
         # create a copy of the DataFrame to operate on
         dohlc = df.tail(count).copy()
@@ -214,8 +237,8 @@ class Historical:
         end_date = str_dates.iloc[-1]
         plt.title(scrip_code + ' (' + start_date + ' to ' + end_date + ')')
         plt.tight_layout()
-        plt.show()
-        plt.savefig('candlesticks.png')
+        self.__show_and_save(plt, show, save, 'candlesticks.png')
+        
     
     def get(self, symbol=None, from_date=None, to_date=None):
         Validator.validate_attribute(symbol, str, True)
