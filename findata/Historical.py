@@ -148,7 +148,7 @@ class Historical:
         df.set_index('Date', drop=True, inplace=True)
         return df
     
-    def __plot_params(self, df, recent):
+    def plot_params(self, df, recent):
         if recent is 0:
             count = df.index.size
             steps = 20
@@ -165,7 +165,7 @@ class Historical:
                 steps = 1
         return count, steps, dfmt
     
-    def __show_and_save(self, plt, show, save, fname):
+    def show_and_save(self, plt, show, save, fname):
         if show:
             plt.show()
         if not show and save:
