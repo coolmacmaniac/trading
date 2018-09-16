@@ -16,6 +16,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from mpl_finance import candlestick_ohlc
 from urllib.parse import quote
 
 sys.path.insert(0, '../../')
@@ -25,6 +26,13 @@ from pyutils.validations import Validator
 from pyutils.logger import log, logn
 
 sys.path.remove('../../')
+
+
+# %%
+
+#import fix_yahoo_finance as yf
+#data = yf.download("^NSEI", start="2018-09-01", end="2018-09-16")
+#data.tail()
 
 
 # %%
@@ -159,7 +167,56 @@ class Historical:
         plt.tight_layout()
         plt.show()
         plt.savefig('timeseries.png')
-
+    
+    def candle_plot_time_series(self, scrip_code, df, recent=0):
+        Validator.validate_attribute(recent, int, True)
+        if recent is 0:
+            count = df.index.size
+            steps = 20
+            dfmt = '%b-%Y'
+        else:
+            count = recent
+            dfmt = '%d-%b-%Y'
+            if recent > 90:
+                dfmt = '%b-%Y'
+                steps = 20
+            elif recent > 60:
+                steps = 5
+            else:
+                steps = 1
+        figure, axis = plt.subplots(figsize=(16, 8))
+        # create a copy of the DataFrame to operate on
+        dohlc = df.tail(count).copy()
+        # take the index back to column
+        dohlc.reset_index(inplace=True)
+        # drop the closed price column, adj.closed price will be considered
+        dohlc.drop('Close', axis=1, inplace=True)
+        # convert the datetime format to short string format
+        dohlc.Date = dohlc.Date.apply(DateTime.dateformatter_short)
+        # get hold of dates for title naming
+        str_dates = dohlc.Date
+        # convert the string dates to pandas TimeStamp values
+        dohlc.Date = pd.to_datetime(dohlc.Date, format='%d-%m-%Y')
+        # convert the pandas TimeStamp values to matplotlib float values
+        dohlc.Date = dohlc.Date.apply(mdates.date2num)
+        candlestick_ohlc(
+                ax=axis,
+                quotes=dohlc.values,
+                width=0.6,
+                colorup='green',
+                colordown='red',
+                alpha=0.7
+                )
+        axis.xaxis.set_major_formatter(mdates.DateFormatter(dfmt))
+        axis.set_xticks(dohlc.Date[::-steps])
+        plt.setp(plt.gca().get_xticklabels(), rotation=90)
+        start_date = str_dates.iloc[0]
+        end_date = str_dates.iloc[-1]
+        plt.title(scrip_code + ' (' + start_date + ' to ' + end_date + ')')
+        plt.tight_layout()
+        plt.show()
+        plt.savefig('candlesticks.png')
+    
     def get(self, symbol=None, from_date=None, to_date=None):
         Validator.validate_attribute(symbol, str, True)
         if from_date is None:
@@ -188,3 +245,4 @@ if __name__ == '__main__':
             DateTime.today()
             )
     fh.line_plot_time_series(symbol, data)
+    fh.candle_plot_time_series(symbol, data, recent=30)
