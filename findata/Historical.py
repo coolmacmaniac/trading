@@ -245,7 +245,7 @@ class Historical:
         if from_date is None:
             from_date = DateTime.five_years_ago_from_today()
         if to_date is None:
-            to_date = DateTime.today()
+            to_date = DateTime.today_extended()
         if self.__online_mode:
             weburl = self.__construct_web_url(symbol, from_date, to_date)
             hist_data = self.__fetch_and_parse_json(weburl)
@@ -265,7 +265,7 @@ if __name__ == '__main__':
     data = fh.get(
             symbol,
             DateTime.five_years_ago_from_today(),
-            DateTime.today()
+            DateTime.today_extended()
             )
     fh.line_plot_time_series(symbol, data)
     fh.candle_plot_time_series(symbol, data, recent=30)

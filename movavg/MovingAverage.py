@@ -55,6 +55,18 @@ class MovingAverage(Historical):
         dohlc['SMA 150'] = dohlc[col].rolling(150).mean()
         dohlc['SMA 200'] = dohlc[col].rolling(200).mean()
         dohlc['SMA 250'] = dohlc[col].rolling(250).mean()
+        #
+        adj = False
+        dohlc['EMA 5'] = dohlc[col].ewm(span=5, adjust=adj).mean()
+        dohlc['EMA 10'] = dohlc[col].ewm(span=10, adjust=adj).mean()
+        dohlc['EMA 15'] = dohlc[col].ewm(span=15, adjust=adj).mean()
+        dohlc['EMA 20'] = dohlc[col].ewm(span=20, adjust=adj).mean()
+        dohlc['EMA 50'] = dohlc[col].ewm(span=50, adjust=adj).mean()
+        dohlc['EMA 100'] = dohlc[col].ewm(span=100, adjust=adj).mean()
+        dohlc['EMA 150'] = dohlc[col].ewm(span=150, adjust=adj).mean()
+        dohlc['EMA 200'] = dohlc[col].ewm(span=200, adjust=adj).mean()
+        dohlc['EMA 250'] = dohlc[col].ewm(span=250, adjust=adj).mean()
+        #
         dohlc = dohlc.dropna()
         return dohlc
     
@@ -72,9 +84,9 @@ class MovingAverage(Historical):
             ax=axis
         )
         self.plot_ma(dohlc.index, dohlc['SMA 5'], 'SMA 5')
-        self.plot_ma(dohlc.index, dohlc['SMA 10'], 'SMA 10')
-        self.plot_ma(dohlc.index, dohlc['SMA 15'], 'SMA 15')
         self.plot_ma(dohlc.index, dohlc['SMA 20'], 'SMA 20')
+        self.plot_ma(dohlc.index, dohlc['EMA 5'], 'EMA 5')
+        self.plot_ma(dohlc.index, dohlc['EMA 20'], 'EMA 20')
         axis.xaxis.set_major_formatter(mdates.DateFormatter(dfmt))
         axis.set_xticks(dohlc.index[::-steps])
         plt.setp(plt.gca().get_xticklabels(), rotation=90)
@@ -115,9 +127,9 @@ class MovingAverage(Historical):
                 alpha=0.7
                 )
         self.plot_ma(dohlc['Date'], dohlc['SMA 5'], 'SMA 5')
-        self.plot_ma(dohlc['Date'], dohlc['SMA 10'], 'SMA 10')
-        self.plot_ma(dohlc['Date'], dohlc['SMA 15'], 'SMA 15')
         self.plot_ma(dohlc['Date'], dohlc['SMA 20'], 'SMA 20')
+        self.plot_ma(dohlc['Date'], dohlc['EMA 5'], 'EMA 5')
+        self.plot_ma(dohlc['Date'], dohlc['EMA 20'], 'EMA 20')
         axis.xaxis.set_major_formatter(mdates.DateFormatter(dfmt))
         axis.set_xticks(dohlc.Date[::-steps])
         plt.setp(plt.gca().get_xticklabels(), rotation=90)
@@ -136,7 +148,7 @@ if __name__ == '__main__':
     data = ma.get(
             symbol,
             DateTime.five_years_ago_from_today(),
-            DateTime.today()
+            DateTime.today_extended()
             )
     dohlc = ma.compute_moving_averages(data)
     ma.line_plot_time_series_with_ma(
