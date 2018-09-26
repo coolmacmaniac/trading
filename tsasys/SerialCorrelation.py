@@ -159,6 +159,18 @@ class SerialCorrelation:
                 lags=self.__n_lags,
                 saveas='ts_first_diffs.png'
                 )
+    
+    def analyse_linear_model(self):
+        # y[t] = B0 + B1*t + w[t]
+        w = np.random.normal(size=self.__n_samples)
+        y = np.empty_like(w)
+        B0 = -5000.
+        B1 = 25.
+        for t in range(len(w)):
+            y[t] = B0 + B1*t + w[t]
+        self.tsplot(y, lags=30, saveas='linear.png')
+        print(type(B0))
+        print(type(B1))
 
 # %%
 if __name__ == '__main__':
@@ -170,3 +182,4 @@ if __name__ == '__main__':
     sc.analyse_random_walk()
     sc.analyse_ts(data)
     sc.analyse_ts_first_diffs(data)
+    sc.analyse_linear_model()
