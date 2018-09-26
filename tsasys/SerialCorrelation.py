@@ -37,6 +37,14 @@ class SerialCorrelation:
         self.__n_lags = 30
         pass
     
+    def __lean_and_mean_data_frame(self, data):
+        ldf = pd.DataFrame(
+                data=data, columns=['Adj Close'], index=data.index
+                )
+        # rename adjusted close column name as close
+        ldf.rename(columns={'Adj Close': 'Close'}, inplace=True)
+        return ldf
+    
     def get_fin_data_from_yahoo(self, scrip, sd, ed, save=False):
         Validator.validate_attribute(scrip, str, True)
         Validator.validate_attribute(sd, str, True)
@@ -45,11 +53,11 @@ class SerialCorrelation:
                 tickers=scrip, start=sd, end=ed
                 )
         data.to_csv('findata.csv', index=True, encoding='utf-8')
-        return data
+        return self.__lean_and_mean_data_frame(data)
     
     def get_fin_data_from_local(self):
         data = pd.read_csv('findata.csv', parse_dates=True, index_col=0)
-        return data
+        return self.__lean_and_mean_data_frame(data)
     
     def serial_correlation(self, data):
         # scatterplot grid config
@@ -111,7 +119,7 @@ class SerialCorrelation:
             pacf_ax = plt.subplot2grid(layout, (1, 1))
             qq_ax = plt.subplot2grid(layout, (2, 0))
             pp_ax = plt.subplot2grid(layout, (2, 1))
-            y.plot(ax=ts_ax)
+            y.plot(ax=ts_ax, lineWidth=1)
             ts_ax.set_title('Time Series Analysis Plots')
             smt.graphics.plot_acf(y, lags=lags, ax=acf_ax, alpha=0.5)
             smt.graphics.plot_pacf(y, lags=lags, ax=pacf_ax, alpha=0.5)
@@ -136,7 +144,21 @@ class SerialCorrelation:
         x = w = np.random.normal(size=self.__n_samples)
         for t in range(1, self.__n_samples):
             x[t] = x[t-1] + w[t]
-        self.tsplot(x, lags=30, saveas='random_walk.png')
+        self.tsplot(x, lags=self.__n_lags, saveas='random_walk.png')
+    
+    def analyse_ts(self, data):
+        self.tsplot(
+                data.Close,
+                lags=self.__n_lags,
+                saveas='ts.png'
+                )
+    
+    def analyse_ts_first_diffs(self, data):
+        self.tsplot(
+                np.diff(data.Close),
+                lags=self.__n_lags,
+                saveas='ts_first_diffs.png'
+                )
 
 # %%
 if __name__ == '__main__':
@@ -146,3 +168,5 @@ if __name__ == '__main__':
     sc.serial_correlation(data)
     sc.analyse_white_noise()
     sc.analyse_random_walk()
+    sc.analyse_ts(data)
+    sc.analyse_ts_first_diffs(data)
