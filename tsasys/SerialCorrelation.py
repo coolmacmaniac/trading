@@ -169,17 +169,35 @@ class SerialCorrelation:
         for t in range(len(w)):
             y[t] = B0 + B1*t + w[t]
         self.tsplot(y, lags=30, saveas='linear.png')
-        print(type(B0))
-        print(type(B1))
-
+    
+    def analyse_exponential_model(self):
+        '''
+        http://pandas.pydata.org/pandas-docs/stable/timeseries.html#offset-aliases
+        '''
+        # a series of imaginary dates
+        dates = pd.date_range('2015-01-01', '2018-09-01', freq='SM')
+        # a series of exponentially increasing returns
+        sales = [np.exp(x/12) for x in range(1, len(dates) + 1)]
+        self.tsplot(sales, lags=30, saveas='exponential.png')
+    
+    def analyse_log_linear_model(self):
+        # a series of imaginary dates
+        dates = pd.date_range('2015-01-01', '2018-09-01', freq='SM')
+        # a series of exponentially increasing returns
+        sales = [np.exp(x/12) for x in range(1, len(dates) + 1)]
+        self.tsplot(np.log(sales), lags=30, saveas='log_linear.png')
+    
+    
 # %%
 if __name__ == '__main__':
     sc = SerialCorrelation()
     #data = sc.get_fin_data_from_yahoo('TCS', '2016-09-24', '2018-09-24')
-    data = sc.get_fin_data_from_local()
-    sc.serial_correlation(data)
-    sc.analyse_white_noise()
-    sc.analyse_random_walk()
-    sc.analyse_ts(data)
-    sc.analyse_ts_first_diffs(data)
-    sc.analyse_linear_model()
+#    data = sc.get_fin_data_from_local()
+#    sc.serial_correlation(data)
+#    sc.analyse_white_noise()
+#    sc.analyse_random_walk()
+#    sc.analyse_ts(data)
+#    sc.analyse_ts_first_diffs(data)
+#    sc.analyse_linear_model()
+#    sc.analyse_exponential_model()
+    sc.analyse_log_linear_model()
