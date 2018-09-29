@@ -168,7 +168,7 @@ class SerialCorrelation:
         B1 = 25.
         for t in range(len(w)):
             y[t] = B0 + B1*t + w[t]
-        self.tsplot(y, lags=30, saveas='linear.png')
+        self.tsplot(y, lags=self.__n_lags, saveas='linear.png')
     
     def analyse_exponential_model(self):
         '''
@@ -178,17 +178,50 @@ class SerialCorrelation:
         dates = pd.date_range('2015-01-01', '2018-09-01', freq='SM')
         # a series of exponentially increasing returns
         sales = [np.exp(x/12) for x in range(1, len(dates) + 1)]
-        self.tsplot(sales, lags=30, saveas='exponential.png')
+        self.tsplot(sales, lags=self.__n_lags, saveas='exponential.png')
     
     def analyse_log_linear_model(self):
         # a series of imaginary dates
         dates = pd.date_range('2015-01-01', '2018-09-01', freq='SM')
         # a series of exponentially increasing returns
         sales = [np.exp(x/12) for x in range(1, len(dates) + 1)]
-        self.tsplot(np.log(sales), lags=30, saveas='log_linear.png')
+        self.tsplot(np.log(sales), lags=self.__n_lags, saveas='log_linear.png')
     
+    def analyse_ar_1_with_root(self, a=1.0):
+        assert a != 0.0, 'AR root can not be zero'
+        assert a < 1.0, 'AR root can not be greater than one'
+        np.random.seed(self.__seed)
+        x = w = np.random.normal(size=self.__n_samples)
+        for t in range(1, self.__n_samples):
+            x[t] = a * x[t-1] + w[t]
+        self.tsplot(x, lags=self.__n_lags, saveas='ar1_{:04.2f}.png'.format(a))
+        # our simulated AR model has order = 1 with alpha = 0.6
+        # if we fit an AR(p) model to the above simulated data and ask it to
+        # select the order, the selected values of p and a should match with
+        # the actual ones
+        log('Fitting the AR model to the simulated data...')
+        mdl = smt.AR(x).fit(
+                maxlag=self.__n_lags,
+                method='mle',
+                ic='bic',
+                trend='nc'
+                )
+        logn('[Done]')
+        log('Estimating the order of the AR model...')
+        est_order = smt.AR(x).select_order(
+                maxlag=self.__n_lags,
+                method='mle',
+                ic='bic',
+                trend='nc'
+                )
+        logn('[Done]')
+        true_order = 1
+        print('alpha estimate: {:3.2f} | best lag order = {}'
+              .format(mdl.params[0], est_order))
+        print('true alpha = {:3.2f} | true order = {}'
+              .format(a, true_order))
     
-# %%
+# %%        
 if __name__ == '__main__':
     sc = SerialCorrelation()
     #data = sc.get_fin_data_from_yahoo('TCS', '2016-09-24', '2018-09-24')
@@ -200,4 +233,5 @@ if __name__ == '__main__':
 #    sc.analyse_ts_first_diffs(data)
 #    sc.analyse_linear_model()
 #    sc.analyse_exponential_model()
-    sc.analyse_log_linear_model()
+#    sc.analyse_log_linear_model()
+    sc.analyse_ar_1_with_root(a=0.6)
