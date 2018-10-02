@@ -114,7 +114,7 @@ class SerialCorrelation:
                 vals[i] = -vals[i]
         return vals
     
-    def get_sample_data(self, m=ModelType.ar, p=1, q=1, n=None):
+    def get_sample_data(self, m=ModelType.ar, p=1, q=1, n=None, b=0):
         Validator.validate_attribute(p, int, True)
         Validator.validate_attribute(q, int, True)
         if n is None:
@@ -129,13 +129,15 @@ class SerialCorrelation:
             betas = self.get_diminishing_random_list(size=q)
             #betas = np.array([0.6, 0.4, 0.2])
         elif m is SerialCorrelation.ModelType.arma:
-            alphas = self.get_diminishing_random_list(size=p)
+            alphas = self.get_alt_diminishing_random_list(size=p)
             betas = self.get_diminishing_random_list(size=q)
+            #alphas = np.array([0.5, -0.25])
+            #betas = np.array([0.5, -0.3])
         # Python requires the zero-lag value as well which is 1
         # also the alphas for the AR model must be negated
         ar = np.r_[1, -alphas]
         ma = np.r_[1, betas]
-        data = smt.arma_generate_sample(ar=ar, ma=ma, nsample=n)
+        data = smt.arma_generate_sample(ar=ar, ma=ma, nsample=n, burnin=b)
         return alphas, betas, data
     
     def fit_ar_model_and_estimate_order(
@@ -161,8 +163,9 @@ class SerialCorrelation:
         logn('[Done]')
         return mdl.params, est_order
     
-    def fit_ma_model_and_estimate_order(
-            self, data, order=(0, 1), maxlag=None, method='mle', trend='nc'
+    def fit_arma_model_and_estimate_order(
+            self, data, order=(0, 1), maxlag=None,
+            method='mle', trend='nc', burnin=0
             ):
         if maxlag is None:
             maxlag = self.__n_lags
@@ -170,11 +173,12 @@ class SerialCorrelation:
         mdl = smt.ARMA(data, order=order).fit(
                 maxlag=maxlag,
                 method=method,
-                trend=trend
+                trend=trend,
+                burnin=burnin
                 )
         logn('[Done]')
         logn(mdl.summary())
-        return mdl.maparams, mdl.k_ma
+        return mdl.arparams, mdl.k_ar, mdl.maparams, mdl.k_ma
     
     def analyse_serial_correlation(self, data):
         sc.g.scatplot(data)
@@ -318,7 +322,7 @@ class SerialCorrelation:
                       saveas='ma{}.png'.format(q)
                       )
         try:
-            params, order = self.fit_ma_model_and_estimate_order(
+            _, _, params, order = self.fit_arma_model_and_estimate_order(
                 rts, maxlag=10, order=(0, q), method='mle', trend='nc'
                 )
             logn('beta estimate: {} | best lag order = {}'
@@ -328,6 +332,33 @@ class SerialCorrelation:
         true_order = q
         logn('true betas = {} | true order = {}'
               .format(b, true_order))
+    
+    def analyse_arma_p_q(self, p=1, q=1):
+        n = self.__n_samples
+        burns = n//10
+        a, b, rts = self.get_sample_data(
+                m=SerialCorrelation.ModelType.arma, p=p, q=q, n=n, b=burns
+                )
+        self.g.tsplot(rts,
+                      lags=self.__n_lags,
+                      saveas='arma{}{}.png'.format(p, q)
+                      )
+        try:
+            ar_p, ar_o, ma_p, ma_o = self.fit_arma_model_and_estimate_order(
+                rts, maxlag=10, order=(p, q),
+                method='mle', trend='nc', burnin=burns
+                )
+            logn('alpha estimate: {} | best ar lag order = {}'
+              .format(ar_p, ar_o))
+            logn('beta estimate: {} | best ma lag order = {}'
+              .format(ma_p, ma_o))
+        except ValueError:
+            pass
+        
+        logn('true alphas = {} | true ar order = {}'
+             .format(a, p))
+        logn('true betas = {} | true ma order = {}'
+             .format(b, q))
     
     
 # %%
@@ -346,4 +377,5 @@ if __name__ == '__main__':
 #    sc.analyse_ar_1_with_root(a=0.6)
 #    sc.analyse_ar_p(p=3)
 #    sc.analyse_ts_log_returns_as_ar_process(data)
-    sc.analyse_ma_q(q=3)
+#    sc.analyse_ma_q(q=3)
+    sc.analyse_arma_p_q(p=2, q=2)
