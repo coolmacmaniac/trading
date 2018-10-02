@@ -65,6 +65,12 @@ class SerialCorrelation:
         ldf.rename(columns={'Adj Close': 'Close'}, inplace=True)
         return ldf
     
+    def __logged_data(self, data):
+        # all available columns are converted to logged values
+        # after shifted division
+        lrets = np.log(data/data.shift(1)).dropna()
+        return lrets
+        
     def get_fin_data_from_yahoo(self, scrip, sd, ed, save=False):
         Validator.validate_attribute(scrip, str, True)
         Validator.validate_attribute(sd, str, True)
@@ -269,12 +275,29 @@ class SerialCorrelation:
         logn('true alphas = {} | true order = {}'
               .format(a, true_order))
     
+    def analyse_ts_log_returns_as_ar_process(self, data):
+        logged = self.__logged_data(data)
+        self.g.tsplot(
+                logged.Close,
+                lags=self.__n_lags,
+                saveas='ts_log_returns.png'
+                )
+        logn('BIC', '='*20, sep='\n')
+        params, order = self.fit_ar_model_and_estimate_order(
+                logged.Close, maxlag=10, method='mle', ic='bic', trend='nc'
+                )
+        if order is 1:
+            logn('alpha estimate: {:.5f} | best lag order = {}'
+              .format(params[0], order))
+        else:
+            logn('alpha estimate: {} | best lag order = {}'
+                  .format(params, order))
     
 # %%
 if __name__ == '__main__':
     sc = SerialCorrelation()
 #    data = sc.get_fin_data_from_yahoo('TCS', '2016-09-24', '2018-09-24')
-#    data = sc.get_fin_data_from_local()
+    data = sc.get_fin_data_from_local()
 #    sc.analyse_serial_correlation(data)
 #    sc.analyse_white_noise()
 #    sc.analyse_random_walk()
@@ -284,4 +307,5 @@ if __name__ == '__main__':
 #    sc.analyse_exponential_model()
 #    sc.analyse_log_linear_model()
 #    sc.analyse_ar_1_with_root(a=0.6)
-    sc.analyse_ar_p(p=3)
+#    sc.analyse_ar_p(p=3)
+    sc.analyse_ts_log_returns_as_ar_process(data)
