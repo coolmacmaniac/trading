@@ -127,6 +127,7 @@ class SerialCorrelation:
         elif m is SerialCorrelation.ModelType.ma:
             alphas = np.array([0.])  # value of p does not matter in this case
             betas = self.get_diminishing_random_list(size=q)
+            #betas = np.array([0.6, 0.4, 0.2])
         elif m is SerialCorrelation.ModelType.arma:
             alphas = self.get_diminishing_random_list(size=p)
             betas = self.get_diminishing_random_list(size=q)
@@ -142,7 +143,7 @@ class SerialCorrelation:
             ):
         if maxlag is None:
             maxlag = self.__n_lags
-        log('Fitting the AR model to the simulated data...')
+        log('Fitting the AR model to the given data...')
         mdl = smt.AR(data).fit(
                 maxlag=maxlag,
                 method=method,
@@ -159,6 +160,21 @@ class SerialCorrelation:
                 )
         logn('[Done]')
         return mdl.params, est_order
+    
+    def fit_ma_model_and_estimate_order(
+            self, data, order=(0, 1), maxlag=None, method='mle', trend='nc'
+            ):
+        if maxlag is None:
+            maxlag = self.__n_lags
+        log('Fitting & estimating the ARMA model to the given data...')
+        mdl = smt.ARMA(data, order=order).fit(
+                maxlag=maxlag,
+                method=method,
+                trend=trend
+                )
+        logn('[Done]')
+        logn(mdl.summary())
+        return mdl.maparams, mdl.k_ma
     
     def analyse_serial_correlation(self, data):
         sc.g.scatplot(data)
@@ -293,6 +309,27 @@ class SerialCorrelation:
             logn('alpha estimate: {} | best lag order = {}'
                   .format(params, order))
     
+    def analyse_ma_q(self, q=1):
+        a, b, rts = self.get_sample_data(
+                m=SerialCorrelation.ModelType.ma, q=q
+                )
+        self.g.tsplot(rts,
+                      lags=self.__n_lags,
+                      saveas='ma{}.png'.format(q)
+                      )
+        try:
+            params, order = self.fit_ma_model_and_estimate_order(
+                rts, maxlag=10, order=(0, q), method='mle', trend='nc'
+                )
+            logn('beta estimate: {} | best lag order = {}'
+              .format(params, order))
+        except ValueError:
+            pass
+        true_order = q
+        logn('true betas = {} | true order = {}'
+              .format(b, true_order))
+    
+    
 # %%
 if __name__ == '__main__':
     sc = SerialCorrelation()
@@ -308,4 +345,5 @@ if __name__ == '__main__':
 #    sc.analyse_log_linear_model()
 #    sc.analyse_ar_1_with_root(a=0.6)
 #    sc.analyse_ar_p(p=3)
-    sc.analyse_ts_log_returns_as_ar_process(data)
+#    sc.analyse_ts_log_returns_as_ar_process(data)
+    sc.analyse_ma_q(q=3)
