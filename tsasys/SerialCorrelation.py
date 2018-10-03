@@ -131,7 +131,7 @@ class SerialCorrelation:
         elif m is SerialCorrelation.ModelType.arma:
             alphas = self.get_alt_diminishing_random_list(size=p)
             betas = self.get_diminishing_random_list(size=q)
-            #alphas = np.array([0.5, -0.25])
+            #alphas = np.array([0.5, -0.25, 0.4])
             #betas = np.array([0.5, -0.3])
         # Python requires the zero-lag value as well which is 1
         # also the alphas for the AR model must be negated
@@ -335,7 +335,7 @@ class SerialCorrelation:
     
     def analyse_arma_p_q(self, p=1, q=1):
         n = self.__n_samples
-        burns = n//10
+        burns = n // 10
         a, b, rts = self.get_sample_data(
                 m=SerialCorrelation.ModelType.arma, p=p, q=q, n=n, b=burns
                 )
@@ -360,12 +360,59 @@ class SerialCorrelation:
         logn('true betas = {} | true ma order = {}'
              .format(b, q))
     
+    def analyse_arma_p_q_best_ic(self, p=1, q=1):
+        n = 5000
+        burns = 2000
+        a, b, rts = self.get_sample_data(
+                m=SerialCorrelation.ModelType.arma, p=p, q=q, n=n, b=burns
+                )
+        self.g.tsplot(rts,
+                      lags=self.__n_lags,
+                      saveas='arma{}{}.png'.format(p, q)
+                      )
+        # pick best order by minimum ic - aic or bic
+        # smallest ic value wins
+        best_ic = np.inf 
+        best_order = None
+        best_mdl = None
+        rng = range(5)
+        for i in rng:
+            for j in rng:
+                try:
+                    tmp_mdl = smt.ARMA(rts, order=(i, j)).fit(
+                            method='mle', trend='nc'
+                            )
+                    tmp_ic = tmp_mdl.bic    # using bic here
+                    if tmp_ic < best_ic:
+                        best_ic = tmp_ic
+                        best_order = (i, j)
+                        best_mdl = tmp_mdl
+                except: continue
+        logn(best_mdl.summary())
+        logn('using BIC', '='*20, sep='\n')
+        logn('true order: ({}, {})'.format(p, q))
+        logn('true alphas = {}'.format(a))
+        logn('true betas = {}'.format(b))
+        logn('ic: {:6.5f} | estimated order: {}'.format(best_ic, best_order))
+        logn('estimated alphas = {}'.format(best_mdl.arparams))
+        logn('estimated betas = {}'.format(best_mdl.maparams))
+        # analysing the model residuals with the estimated information
+        # the residuals should be a white noise process with no serial
+        # correlation for any lag, if this is the case then we can say
+        # that the best model has been fit to explain the data
+        self.g.tsplot(best_mdl.resid,
+                      lags=self.__n_lags,
+                      saveas='arma{}{}_residuals.png'.format(
+                              best_order[0], best_order[1]
+                              )
+                      )
+    
     
 # %%
 if __name__ == '__main__':
     sc = SerialCorrelation()
 #    data = sc.get_fin_data_from_yahoo('TCS', '2016-09-24', '2018-09-24')
-    data = sc.get_fin_data_from_local()
+#    data = sc.get_fin_data_from_local()
 #    sc.analyse_serial_correlation(data)
 #    sc.analyse_white_noise()
 #    sc.analyse_random_walk()
@@ -378,4 +425,5 @@ if __name__ == '__main__':
 #    sc.analyse_ar_p(p=3)
 #    sc.analyse_ts_log_returns_as_ar_process(data)
 #    sc.analyse_ma_q(q=3)
-    sc.analyse_arma_p_q(p=2, q=2)
+#    sc.analyse_arma_p_q(p=2, q=2)
+    sc.analyse_arma_p_q_best_ic(p=3, q=2)
