@@ -11,6 +11,7 @@ Created on  : Sat Sep 22 17:09:05 2018
 import sys
 
 import time
+import quandl
 
 import pandas as pd
 import numpy as np
@@ -81,8 +82,34 @@ class SerialCorrelation:
         data.to_csv('findata.csv', index=True, encoding='utf-8')
         return self.__lean_and_mean_data_frame(data)
     
-    def get_fin_data_from_local(self):
-        data = pd.read_csv('findata.csv', parse_dates=True, index_col=0)
+    def get_fin_data_from_quandl(self, scrip, sd, ed, save=False):
+        Validator.validate_attribute(scrip, str, True)
+        Validator.validate_attribute(sd, str, True)
+        Validator.validate_attribute(ed, str, True)
+        data = quandl.get(
+                api_key='W48T46x32auyA_jwkzXT',
+                dataset=scrip,
+                start_date=sd,
+                end_date=ed
+                )
+        dropcols = [
+                'Last Traded Price',
+                'Turnover (in Lakhs)'
+                ]
+        cols = [
+                'Open',
+                'High',
+                'Low',
+                'Adj Close',
+                'Volume'
+                ]
+        data.drop(columns=dropcols, inplace=True)
+        data.rename(columns={'Close Price': 'Adj Close'}, inplace=True)
+        data.to_csv('fd.csv', index=True, header=cols, encoding='utf-8')
+        return self.__lean_and_mean_data_frame(data)
+
+    def get_fin_data_from_local(self, file_name):
+        data = pd.read_csv(file_name, parse_dates=True, index_col=0)
         return self.__lean_and_mean_data_frame(data)
     
     def get_diminishing_random_list(self, size):
@@ -372,7 +399,7 @@ class SerialCorrelation:
                       )
         # pick best order by minimum ic - aic or bic
         # smallest ic value wins
-        best_ic = np.inf 
+        best_ic = np.inf
         best_order = None
         best_mdl = None
         rng = range(5)
@@ -407,12 +434,45 @@ class SerialCorrelation:
                               )
                       )
     
+    def analyse_ts_arma(self, data):
+        ts = self.__logged_data(data).Close
+        best_ic = np.inf
+        best_order = None
+        best_mdl = None
+        rng = range(5)      # orders greater than 5 are not practically useful
+        for i in rng:
+            for j in rng:
+                try:
+                    tmp_mdl = smt.ARMA(ts, order=(i, j)).fit(
+                            method='mle', trend='nc'
+                            )
+                    tmp_ic = tmp_mdl.bic    # using bic here
+                    logn('ic={}, order=({}, {})'.format(tmp_ic, i, j))
+                    if tmp_ic < best_ic:
+                        best_ic = tmp_ic
+                        best_order = (i, j)
+                        best_mdl = tmp_mdl
+                except: continue
+        logn(best_mdl.summary())
+        logn('using BIC', '='*20, sep='\n')
+        logn('ic: {:6.5f} | estimated order: {}'.format(best_ic, best_order))
+        logn('estimated alphas = {}'.format(best_mdl.arparams))
+        logn('estimated betas = {}'.format(best_mdl.maparams))
+        self.g.tsplot(best_mdl.resid,
+                      lags=self.__n_lags,
+                      saveas='ts_arma{}{}_residuals.png'.format(
+                              best_order[0], best_order[1]
+                              )
+                      )
+    
     
 # %%
 if __name__ == '__main__':
     sc = SerialCorrelation()
 #    data = sc.get_fin_data_from_yahoo('TCS', '2016-09-24', '2018-09-24')
-#    data = sc.get_fin_data_from_local()
+#    data = sc.get_fin_data_from_quandl('TC1/TCS', '2000-01-01', '2018-10-06')
+#    data = sc.get_fin_data_from_local('findata.csv')
+    data = sc.get_fin_data_from_local('fd.csv')
 #    sc.analyse_serial_correlation(data)
 #    sc.analyse_white_noise()
 #    sc.analyse_random_walk()
@@ -426,4 +486,5 @@ if __name__ == '__main__':
 #    sc.analyse_ts_log_returns_as_ar_process(data)
 #    sc.analyse_ma_q(q=3)
 #    sc.analyse_arma_p_q(p=2, q=2)
-    sc.analyse_arma_p_q_best_ic(p=3, q=2)
+#    sc.analyse_arma_p_q_best_ic(p=3, q=2)
+    sc.analyse_ts_arma(data)    # data was older and was fetched from quandl

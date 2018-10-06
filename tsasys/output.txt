@@ -38,3 +38,65 @@ estimated alphas = [ 0.67713107 -0.59641572  0.33785301]
 estimated betas = [0.73159891 0.35504253]
 
 ##############################################################################
+Call::
+sc.analyse_ts_arma(data)    # data was older and was fetched from quandl
+Output::
+ic=-7348.770631173307, order=(0, 1)
+ic=-7352.100202817255, order=(0, 2)
+ic=-7354.613828735636, order=(0, 3)
+ic=-7350.272928386139, order=(0, 4)
+ic=-7348.693848733868, order=(1, 0)
+ic=-7347.992785866812, order=(1, 1)
+ic=-7353.722348871833, order=(1, 2)
+ic=-7348.942651872596, order=(1, 3)
+ic=-7351.359631230718, order=(2, 0)
+ic=-7355.415283709147, order=(2, 1)
+ic=-7352.811911804722, order=(2, 2)
+ic=-7345.483444866949, order=(2, 3)
+ic=-7354.284566202704, order=(3, 0)
+ic=-7350.713852349827, order=(3, 1)
+ic=-7345.480567879212, order=(3, 2)
+ic=-7340.173999594181, order=(3, 3)
+ic=-7352.168794298028, order=(4, 0)
+ic=-7344.818174876101, order=(4, 1)
+ic=-7338.427865789552, order=(4, 2)
+ic=-7331.073678629697, order=(4, 3)
+ic=-7335.684242261997, order=(4, 4)
+                              ARMA Model Results                              
+==============================================================================
+Dep. Variable:                  Close   No. Observations:                 1580
+Model:                     ARMA(2, 1)   Log Likelihood                3692.438
+Method:                           mle   S.D. of innovations              0.023
+Date:                Sat, 06 Oct 2018   AIC                          -7376.876
+Time:                        23:26:10   BIC                          -7355.415
+Sample:                    08-26-2004   HQIC                         -7368.902
+                         - 12-31-2010                                         
+===============================================================================
+                  coef    std err          z      P>|z|      [0.025      0.975]
+-------------------------------------------------------------------------------
+ar.L1.Close     0.5813      0.102      5.678      0.000       0.381       0.782
+ar.L2.Close    -0.1047      0.026     -4.057      0.000      -0.155      -0.054
+ma.L1.Close    -0.5712      0.101     -5.669      0.000      -0.769      -0.374
+                                    Roots                                    
+=============================================================================
+                 Real           Imaginary           Modulus         Frequency
+-----------------------------------------------------------------------------
+AR.1            2.7754           -1.3588j            3.0902           -0.0725
+AR.2            2.7754           +1.3588j            3.0902            0.0725
+MA.1            1.7507           +0.0000j            1.7507            0.0000
+-----------------------------------------------------------------------------
+using BIC
+====================
+ic: -7355.41528 | estimated order: (2, 1)
+estimated alphas = [ 0.58128389 -0.10472108]
+estimated betas = [-0.57121251]
+--------------------
+- All the coefficients are well within the 95% confidence interval.
+- The ACF and PACF are showing no significant or very less autocorrelation.
+- The QQ and Probability Plots show the residuals are approximately normal with
+  heavy tails.
+- However, this model's residuals do NOT look like white noise! The highlighted
+  areas are conditional heteroskedasticity (conditional volatility clustering)
+  that the ARMA model has not captured.
+
+##############################################################################
