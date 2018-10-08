@@ -179,3 +179,92 @@ estimated betas = []
   explained the conditional volatility in the series either!
 
 ##############################################################################
+Call:
+sc.analyse_ts_arima(data)
+sc.forecast_ts_arima(ts, best_mdl, best_order)
+Output:
+ic=-24781.12746212662, order=(0, 0, 1)
+ic=-24792.68470619338, order=(0, 0, 2)
+ic=-24792.429838831195, order=(0, 0, 3)
+ic=-24791.628383751668, order=(0, 0, 4)
+ic=-24740.564175138767, order=(0, 1, 1)
+ic=-24777.538320074433, order=(1, 0, 0)
+ic=-24788.902282840136, order=(1, 0, 1)
+ic=-24792.345098874415, order=(1, 0, 2)
+ic=-22831.019308972085, order=(1, 1, 0)
+ic=-24779.977183320254, order=(1, 1, 3)
+ic=-24781.072668964116, order=(1, 1, 4)
+ic=-24793.91295828369, order=(2, 0, 0)
+ic=-24793.285952899976, order=(2, 0, 1)
+ic=-24792.660104724564, order=(2, 0, 2)
+ic=-23514.912559506316, order=(2, 1, 0)
+ic=-24781.550967422656, order=(2, 1, 1)
+ic=-24780.820140491036, order=(2, 1, 2)
+ic=-24779.967529634552, order=(2, 1, 3)
+ic=-24788.965577994553, order=(2, 1, 4)
+ic=-24793.375917148296, order=(3, 0, 0)
+ic=-24791.47282345732, order=(3, 0, 1)
+ic=-24791.476673683006, order=(3, 0, 2)
+ic=-23799.963679947286, order=(3, 1, 0)
+ic=-24780.84880996663, order=(3, 1, 1)
+ic=-24782.453570105812, order=(3, 1, 2)
+ic=-24789.605150656498, order=(3, 1, 3)
+ic=-24787.63307938495, order=(3, 1, 4)
+ic=-24791.96434670985, order=(4, 0, 0)
+ic=-24794.555789975682, order=(4, 0, 1)
+ic=-24804.995019476948, order=(4, 0, 2)
+ic=-24811.536936647302, order=(4, 0, 3)
+ic=-24783.24969694001, order=(4, 0, 4)
+ic=-23929.223861444443, order=(4, 1, 0)
+ic=-24779.55131251864, order=(4, 1, 1)
+ic=-24785.817540190452, order=(4, 1, 2)
+ic=-24786.738625781167, order=(4, 1, 3)
+ic=-24789.776263208732, order=(4, 1, 4)
+                              ARMA Model Results                              
+==============================================================================
+Dep. Variable:                   LSPY   No. Observations:                 4076
+Model:                     ARMA(4, 3)   Log Likelihood               12413.768
+Method:                           mle   S.D. of innovations              0.012
+Date:                Mon, 08 Oct 2018   AIC                         -24811.537
+Time:                        15:38:25   BIC                         -24761.034
+Sample:                    07-31-2002   HQIC                        -24793.652
+                         - 10-05-2018                                         
+==============================================================================
+                 coef    std err          z      P>|z|      [0.025      0.975]
+------------------------------------------------------------------------------
+ar.L1.LSPY    -0.0396      0.122     -0.325      0.745      -0.278       0.199
+ar.L2.LSPY    -0.4550      0.109     -4.169      0.000      -0.669      -0.241
+ar.L3.LSPY     0.6911      0.132      5.254      0.000       0.433       0.949
+ar.L4.LSPY     0.0203      0.024      0.851      0.395      -0.027       0.067
+ma.L1.LSPY    -0.0407      0.120     -0.339      0.735      -0.277       0.195
+ma.L2.LSPY     0.4089      0.092      4.423      0.000       0.228       0.590
+ma.L3.LSPY    -0.7343      0.116     -6.323      0.000      -0.962      -0.507
+                                    Roots                                    
+=============================================================================
+                 Real           Imaginary           Modulus         Frequency
+-----------------------------------------------------------------------------
+AR.1           -0.3725           -0.9393j            1.0105           -0.3101
+AR.2           -0.3725           +0.9393j            1.0105            0.3101
+AR.3            1.3908           -0.0000j            1.3908           -0.0000
+AR.4          -34.6053           -0.0000j           34.6053           -0.5000
+MA.1           -0.3761           -0.9481j            1.0199           -0.3101
+MA.2           -0.3761           +0.9481j            1.0199            0.3101
+MA.3            1.3091           -0.0000j            1.3091           -0.0000
+-----------------------------------------------------------------------------
+using AIC
+====================
+ic: -24811.53694 | estimated order: (4, 0, 3)
+estimated alphas = [-0.03958288 -0.45499643  0.69106574  0.02034961]
+estimated betas = [-0.04074982  0.40885588 -0.73431338]
+--------------------
+- All the coefficients are well within the 95% confidence interval.
+- The ACF and PACF are showing no significant or very less autocorrelation.
+- The QQ and Probability Plots show the residuals are approximately normal with
+  heavy tails.
+- The best model has a differencing of 0 because we already took the first
+  difference of log prices to calculate the stock returns.
+- This ARIMA model with AIC too has not explained the conditional volatility
+  in the series either!
+- The 21 day forecast has to be verified over time.
+
+##############################################################################

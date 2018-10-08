@@ -496,6 +496,38 @@ class SerialCorrelation:
                               )
                       )
     
+    def forecast_ts_arima(self, returns, model, order, days=21):
+        # create an n-day forecast of returns with 95%, 99% CI
+        f, err95, ci95 = model.forecast(steps=days, alpha=0.05) # 95% CI
+        _, err99, ci99 = model.forecast(steps=days, alpha=0.01) # 99% CI
+        # generate date index for next n-days excluding last day of returns
+        idx = pd.date_range(data.index[-1], periods=days, freq='D')
+        # reconstruct the forecast into dataframe
+        fc_95 = pd.DataFrame(
+                np.column_stack([f, ci95]),
+                index=idx,
+                columns=['forecast', 'lower_ci_95', 'upper_ci_95']
+                )
+        fc_99 = pd.DataFrame(
+                np.column_stack([ci99]),
+                index=idx,
+                columns=['lower_ci_99', 'upper_ci_99']
+                )
+        fc_all = fc_95.combine_first(fc_99)
+        logn(fc_all.head())
+        # get the returns for last sample days, say 500 days
+        sample_days = 500
+        ts = returns.iloc[-sample_days:].copy()
+        # get the sample prediction over last sample days
+        pred = model.predict(ts.index[0], ts.index[-1])
+        # construct the title and file name
+        title = '{} Day Returns Forecast\nARIMA{}'.format(days, order)
+        filename = 'ts_forecast_arima{}{}{}.png'.format(
+                order[0], order[1], order[2]
+                )
+        # do the plotting
+        self.g.fcplot(ts, pred, fc_all, title, filename)
+    
     def analyse_ts_arima(self, data):
         ts = data.LSPY
         best_ic = np.inf
@@ -510,7 +542,7 @@ class SerialCorrelation:
                         tmp_mdl = smt.ARIMA(ts, order=(i, d, j)).fit(
                                 method='mle', trend='nc'
                                 )
-                        tmp_ic = tmp_mdl.bic    # using bic here
+                        tmp_ic = tmp_mdl.aic    # using aic here
                         logn('ic={}, order=({}, {}, {})'.format(tmp_ic,i,d,j))
                         if tmp_ic < best_ic:
                             best_ic = tmp_ic
@@ -518,7 +550,7 @@ class SerialCorrelation:
                             best_mdl = tmp_mdl
                     except: continue
         logn(best_mdl.summary())
-        logn('using BIC', '='*20, sep='\n')
+        logn('using AIC', '='*20, sep='\n')
         logn('ic: {:6.5f} | estimated order: {}'.format(best_ic, best_order))
         logn('estimated alphas = {}'.format(best_mdl.arparams))
         logn('estimated betas = {}'.format(best_mdl.maparams))
@@ -528,6 +560,8 @@ class SerialCorrelation:
                               best_order[0], best_order[1], best_order[2]
                               )
                       )
+        # forecasting on the basis of best fit arima model
+        self.forecast_ts_arima(ts, best_mdl, best_order)  # ts should have index
     
     
 # %%
